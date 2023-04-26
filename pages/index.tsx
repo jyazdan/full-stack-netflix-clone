@@ -1,7 +1,19 @@
 import Head from 'next/head'
-
+import { getSession, signOut } from 'next-auth/react'
+import { NextPageContext } from 'next'
+import useCurrentUser from '@/hooks/useCurrentUser'
+import Navbar from '@/components/Navbar'
+import Billboard from '@/components/Billboard'
+import MovieList from '@/components/MovieList'
+import useMovieList from '@/hooks/useMovieList'
+import useFavorites from '@/hooks/useFavorites'
+import InfoModal from '@/components/InfoModal'
+import useInfoModalStore from '@/hooks/useInfoModalStore'
 
 export default function Home() {
+  const { data: movies = [] } = useMovieList()
+  const { data: favorites = []} = useFavorites()
+  const {isOpen, closeModal} = useInfoModalStore()
   return (
     <>
       <Head>
@@ -11,8 +23,30 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <>
-        <h1 className='text-2xl text-green-400'>Netflix clone</h1>
+      <InfoModal visible={isOpen} onClose={closeModal}/>
+      <Navbar />
+      <Billboard />
+      <div className='pd-40'>
+      <MovieList title='Trending Now' data={movies}/>
+      <MovieList title='My List' data={favorites}/>
+      </div>
       </>
     </>
   )
+}
+
+export async function getServerSideProps(context: NextPageContext) {
+  const session = await getSession(context);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth',
+        permanent: false,
+      }
+    }
+  }
+  return {
+    props: {}
+  }
 }
